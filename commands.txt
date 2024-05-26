@@ -1,0 +1,3 @@
+dotnet new webapi -n MiddlewareDemo -controllers
+dotnet add package Serilog.AspNetCore
+dotnet add package Serilog.Sinks.File
