@@ -23,41 +23,70 @@ if (app.Environment.IsDevelopment())
     app.UseSwaggerUI();
 }
 
-//3 middleware components implements own logic and passes next, statements run according to scopes inner order, nemlig: after 2 line 1, line 2, after 1, line 1, line 2
-app.Use(async (context, next) =>
+//multiple in one 
+//subrequest
+app.Map("/lottery", app =>
 {
-    var logger = app.Services.GetRequiredService<ILogger<Program>>();
+    var random = new Random();
+    var luckyNumber = random.Next(1, 6);
 
-    logger.LogInformation($"request host : {context.Request.Host}");
-    logger.LogInformation("Before Next 0");
+    //first condition
+    app.UseWhen(context => context.Request.QueryString.Value == $"?{luckyNumber.ToString()}", app =>
+    {
+        //done, break the branch, rejoin to main pipeline
+        app.Run(async context =>
+        {
+            //match
+            await context.Response.WriteAsync($"You win! You got the lucky number {luckyNumber}!");
+        });
+    });
 
-    await next(context);
+    //not matched, second condition has 2 subs
+    app.UseWhen(context => string.IsNullOrWhiteSpace(context.Request.QueryString.Value), app =>
+    {
+        //sub 1
+        app.Use(async (context, next) =>
+        {
+            // enable new entry/"number" 
+            var number = context.Request.Query["number"];
+            //if user didnt provide an input
+            if (string.IsNullOrEmpty(number))
+            {
+                number = random.Next(1, 6).ToString();
+                context.Request.Headers.TryAdd("number", number);
+            }
+            await next(context);
+        });
 
-    logger.LogInformation("After Next 0");
-    logger.LogInformation($"response status kode: {context.Response.StatusCode}");
+        //sub 2, takes number from sub 1, rejoin pipeline when done
+        app.MapWhen(context => context.Request.Headers["number"] == luckyNumber.ToString(), app =>
+        {
+            //terminate, done
+            app.Run(async context =>
+            {
+                await context.Response.WriteAsync($"You win! You got the lucky number {luckyNumber}!");
+            });
+        });
+    });
+    //default middleware
+    app.Run(async context =>
+    {
+        var number = "";
+        if (context.Request.QueryString.HasValue)
+        {
+            number = context.Request.QueryString.Value?.Replace("?", "");
+        }
+        else
+        {
+            number = context.Request.Headers["number"];
+        }
+        await context.Response.WriteAsync($"Your number is {number}. Try again!");
+    });
 });
 
-app.Use(async (context, next) =>
+app.Run(async context =>
 {
-    var logger = app.Services.GetRequiredService<ILogger<Program>>();
-    logger.LogInformation($"ClientName HttpHeader in Middleware 1: {context.Request.Headers["ClientName"]}");
-    logger.LogInformation($"Add a ClientName HttpHeader in Middleware 1");
-    context.Request.Headers.TryAdd("ClientName", "Machos");
-    logger.LogInformation("Before Next 1");
-    await next(context);
-    logger.LogInformation("After Next 1");
-    logger.LogInformation($"Response StatusCode in Middleware 1: {context.Response.StatusCode}");
-});
-
-app.Use(async (context, next) =>
-{
-    var logger = app.Services.GetRequiredService<ILogger<Program>>();
-    logger.LogInformation($"ClientName HttpHeader in Middleware 2: {context.Request.Headers["ClientName"]}");
-    logger.LogInformation("Before Next 2");
-    context.Response.StatusCode = StatusCodes.Status202Accepted;
-    await next(context);
-    logger.LogInformation("After 2");
-    logger.LogInformation($"Response StatusCode in Middleware 2: {context.Response.StatusCode}");
+    await context.Response.WriteAsync($"Use the /lottery URL to play. You can choose your number with the format /lottery?1.");
 });
 
 
