@@ -1,3 +1,4 @@
+using System.Net;
 using System.Threading.RateLimiting;
 using Microsoft.AspNetCore.Http.Timeouts;
 using Microsoft.AspNetCore.RateLimiting;
@@ -34,6 +35,11 @@ builder.Services.AddRequestTimeouts(option =>
 });
 
 var app = builder.Build();
+
+// if request is this,then, shortcircuit it .. 
+app.MapGet("robots.txt", () => Results.Content("User-agent: *\nDisallow: /", "text/plain")).ShortCircuit();
+//or
+app.MapShortCircuit((int)HttpStatusCode.NotFound, "robots.txt", "favicon.ico");
 
 // Configure the HTTP request pipeline.
 if (app.Environment.IsDevelopment())
