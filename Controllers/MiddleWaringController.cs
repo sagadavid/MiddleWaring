@@ -39,5 +39,11 @@ namespace MyApp.Namespace
         {
             return Ok($"allowed request amount is declared by policy : {DateTime.Now.Ticks.ToString()}");
         }
+
+        [HttpGet("robots.txt")]
+        public ActionResult AskRObotsFile()
+        {
+            return Ok();
+        }
     }
 }
