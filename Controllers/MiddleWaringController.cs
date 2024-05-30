@@ -13,8 +13,8 @@ namespace MyApp.Namespace
 
         [HttpGet("delay-request")]
         //[RequestTimeout(5000)]
-        //[RequestTimeout("ShortTimeoutPolicy")]
-        [RequestTimeout("LongTimeoutPolicy")]
+        [RequestTimeout("ShortTimeoutPolicy")]
+        //[RequestTimeout("LongTimeoutPolicy")]
 
         public async Task<ActionResult> RequestTimeoutDemo()
         {
