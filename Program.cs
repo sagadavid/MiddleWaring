@@ -17,7 +17,7 @@ builder.Logging.Log2File();
 
 builder.Services.AddRateLimiter(_ =>
 //limit requests per window in the policy called few
-_.AddFixedWindowLimiter(policyName: "few", options =>
+_.AddFixedWindowLimiter(policyName: "limited", options =>
 {
     options.PermitLimit = 4;//max request per window
     options.Window = TimeSpan.FromSeconds(6);//window duration
@@ -38,7 +38,7 @@ app.UseRateLimiter();
 
 //branch to ratelimit
 app.MapGet("/ratelimiting", () =>
-Results.Ok($"{DateTime.Now.Ticks.ToString()}")).RequireRateLimiting("few");//implement the policy named few
+Results.Ok($"{DateTime.Now.Ticks.ToString()}")).RequireRateLimiting("limited");//implement the policy, refresh window, 4 req in 6sec
 
 app.UseHttpsRedirection();
 
