@@ -2,6 +2,7 @@ using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Http.Timeouts;
 using Microsoft.AspNetCore.RateLimiting;
+using MiddleWaring;
 
 namespace MyApp.Namespace
 {
@@ -10,6 +11,8 @@ namespace MyApp.Namespace
     public class MiddleWareSampleController(ILogger<MiddleWareSampleController> logger) : ControllerBase
     {
         private readonly Random _random = new();
+
+        public string CorrelationIdHeaderName = "";
 
         [HttpGet("delay-request")]
         //[RequestTimeout(5000)]
@@ -45,5 +48,29 @@ namespace MyApp.Namespace
         {
             return Ok();
         }
+
+        [HttpGet("corrID")]
+        public ActionResult GetCorrID()
+        {
+            // Get header and corrID
+            var corrID = Request.Headers["X-Correlation-Id"].FirstOrDefault();
+
+            if (string.IsNullOrEmpty(corrID))
+            {
+                return BadRequest("Correlation ID not found in the request headers.");
+            }
+
+            // Log the correlation ID
+            logger.LogInformation("Handling the request. CorrelationId: {CorrelationId}", corrID);
+
+            // Create response content
+            var responseMessage = $"Correlation ID is: {corrID}";
+            var httpContent = new StringContent(responseMessage);
+            httpContent.Headers.Add("X-Correlation-Id", corrID);
+
+            return Ok(responseMessage);
+
+        }
     }
 }
+

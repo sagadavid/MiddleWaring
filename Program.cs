@@ -36,6 +36,8 @@ builder.Services.AddRequestTimeouts(option =>
 
 var app = builder.Build();
 
+app.UseMiddleware<CorrelationIdMiddleWare>();
+
 // if request is this,then, shortcircuit it .. 
 app.MapGet("robots.txt", () => Results.Content("User-agent: *\nDisallow: /", "text/plain")).ShortCircuit();
 //or
@@ -53,6 +55,8 @@ app.UseRateLimiter();
 //branch to ratelimit
 //app.MapGet("/ratelimiting", () =>
 //Results.Ok($"{DateTime.Now.Ticks.ToString()}")).RequireRateLimiting("limited");//implement the policy, refresh window, 4 req in 6sec
+
+
 
 app.UseRequestTimeouts();
 
