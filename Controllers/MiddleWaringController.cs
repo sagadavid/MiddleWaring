@@ -12,7 +12,10 @@ namespace MyApp.Namespace
         private readonly Random _random = new();
 
         [HttpGet("delay-request")]
-        [RequestTimeout(5000)]
+        //[RequestTimeout(5000)]
+        //[RequestTimeout("ShortTimeoutPolicy")]
+        [RequestTimeout("LongTimeoutPolicy")]
+
         public async Task<ActionResult> RequestTimeoutDemo()
         {
             var delay = _random.Next(1, 10);

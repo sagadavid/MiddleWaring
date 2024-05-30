@@ -1,4 +1,5 @@
 using System.Threading.RateLimiting;
+using Microsoft.AspNetCore.Http.Timeouts;
 using Microsoft.AspNetCore.RateLimiting;
 using MiddleWaring;
 
@@ -25,7 +26,12 @@ _.AddFixedWindowLimiter(policyName: "limited", options =>
     options.QueueLimit = 2;//two req at a time
 }));
 
-builder.Services.AddRequestTimeouts();
+builder.Services.AddRequestTimeouts(option =>
+{
+    option.DefaultPolicy = new RequestTimeoutPolicy { Timeout = TimeSpan.FromSeconds(5) };
+    option.AddPolicy("ShortTimeoutPolicy", TimeSpan.FromSeconds(2));
+    option.AddPolicy("LongTimeoutPolicy", TimeSpan.FromSeconds(10));
+});
 
 var app = builder.Build();
 
